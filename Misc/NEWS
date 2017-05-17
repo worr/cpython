@@ -10,7 +10,11 @@ What's New in Python 3.6.2 release candidate 1?
 Core and Builtins
 -----------------
 
-- bpo-12414: sys.getsizeof() on a code object now returns the sizes
+- bpo-30039: If a KeyboardInterrupt happens when the interpreter is in
+  the middle of resuming a chain of nested 'yield from' or 'await'
+  calls, it's now correctly delivered to the innermost frame.
+
+ bpo-12414: sys.getsizeof() on a code object now returns the sizes
   which includes the code struct and sizes of objects which it references.
   Patch by Dong-hee Na.
 

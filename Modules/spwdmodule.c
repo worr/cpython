@@ -29,7 +29,21 @@ An exception is raised if the entry asked for cannot be found.\n\
 You have to be root to be able to use this module.");
 
 
-#if defined(HAVE_GETSPNAM) || defined(HAVE_GETSPENT)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
+/* compatibility with linux spwd struct */
+struct spwd {
+    char *sp_namp;
+    char *sp_pwdp;
+    time_t sp_lstchg;
+    long sp_min;
+    long sp_max;
+    long sp_warn;
+    long sp_inact;
+    long sp_expire;
+    unsigned long sp_flag;
+};
+#endif
+
 
 static PyStructSequence_Field struct_spwd_type_fields[] = {
     {"sp_namp", "login name"},
@@ -108,7 +122,26 @@ static PyObject *mkspent(struct spwd *p)
     return v;
 }
 
-#endif  /* HAVE_GETSPNAM || HAVE_GETSPENT */
+#if !defined(HAVE_GETSPNAM) && (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__))
+
+struct spwd *
+getspnam(const char *name)
+{
+    struct passwd *passwd = NULL;
+    static struct spwd spwd;
+
+    if ((passwd == getpwnam(name)) == NULL)
+        return NULL;
+
+    spwd.sp_namp = passwd.pw_name;
+    spwd.sp_pwdp = passwd.pw_passwd;
+    spwd.sp_lstchg = passwd.pw_change;
+    spwd.sp_expire = passwd.pw_expire / 86400; 
+
+    return &spwd;
+}
+
+#endif
 
 
 #ifdef HAVE_GETSPNAM
